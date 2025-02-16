@@ -4,11 +4,11 @@
     {% for page_id in page.family_line %}
     {% set parent_page = site.pages[page_id] %}
       {% if parent_page.emoji %}
-      <li class="header-title-block"><a href="{{parent_page.url}}">{{parent_page.emoji}} {{parent_page.title}}</a></li>
+      <li class="header-title-block"><a href="/{{parent_page.url}}">{{parent_page.emoji}} {{parent_page.title}}</a></li>
       {% elif parent_page.icon %}
-      <li class="header-title-block"><a href="{{parent_page.url}}"><span class="miniicon">  <img src="{{parent_page.icon}}">  </span> {{parent_page.title}} </a></li>
+      <li class="header-title-block"><a href="/{{parent_page.url}}"><span class="miniicon">  <img src="{{parent_page.icon}}">  </span> {{parent_page.title}} </a></li>
       {% else %}
-      <li class="header-title-block"><a href="{{parent_page.url}}">{{parent_page.title}}</a></li>
+      <li class="header-title-block"><a href="/{{parent_page.url}}">{{parent_page.title}}</a></li>
       {% endif %}
     {% endfor %}
 
