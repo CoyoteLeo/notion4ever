@@ -94,10 +94,18 @@ def notion_page_parser(page_id: str, notion: "notion_client.client.Client",
     
     logging.debug(f"🤖 Parsed content of {page['id']}.")
 
+    removed_blocks = []
     for i_block, block in enumerate(notion_json[page['id']]['blocks']):
         if page_type == 'page':
             if block["type"] in ['page', 'child_page', 'child_database']:
-                notion_page_parser(block['id'], notion, filename, notion_json)
+                try:
+                    notion_page_parser(block['id'], notion, filename, notion_json)
+                except APIResponseError as e:
+                    # if 404 error, then remove the block
+                    if e.code == notion_client.APIErrorCode.ObjectNotFound:
+                        logging.debug(f"🤖 Removing block {block['id']}.")
+                        removed_blocks.append(i_block)
+                    raise e
             else:
                 block = block_parser(block, notion)
                 notion_json[page['id']]['blocks'][i_block] = block
@@ -107,4 +115,13 @@ def notion_page_parser(page_id: str, notion: "notion_client.client.Client",
             notion_json[page['id']]['blocks'][i_block] = block
             update_notion_file(filename, notion_json)
             if block["object"] in ['page', 'child_page', 'child_database']:
-                notion_page_parser(block['id'], notion, filename, notion_json)
+                try:
+                    notion_page_parser(block['id'], notion, filename, notion_json)
+                except APIResponseError as e:
+                    # if 404 error, then remove the block
+                    if e.code == notion_client.APIErrorCode.ObjectNotFound:
+                        logging.debug(f"🤖 Removing block {block['id']}.")
+                        removed_blocks.append(i_block)
+                    raise e
+    for i_block in reversed(removed_blocks):
+        notion_json[page['id']]['blocks'].pop(i_block)
