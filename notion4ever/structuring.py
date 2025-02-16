@@ -187,7 +187,8 @@ def parse_headers(raw_notion: dict) -> dict:
         if "children" not in notion_pages[page_id].keys():
             notion_pages[page_id]["children"] = []
 
-        if parent_id is not None:
+        # The fetch job may not include the parent page if the given page is not the root page.
+        if parent_id is not None and parent_id in notion_pages.keys():
             notion_pages[parent_id]["children"].append(page_id)
 
         # Cover
@@ -231,8 +232,8 @@ def find_lists_in_dbs(structured_notion: dict):
         
 def parse_family_line(page_id: str, family_line: list, structured_notion: dict):
     """Parses the whole parental line for page with 'page_id'"""
-    if structured_notion['pages'][page_id]["parent"] is not None:
-        par_id = structured_notion["pages"][page_id]["parent"]
+    par_id = structured_notion["pages"][page_id]["parent"]
+    if par_id is not None and par_id in structured_notion["pages"]:
         family_line.insert(0, par_id)
         family_line = parse_family_line(par_id, family_line, structured_notion)
     
