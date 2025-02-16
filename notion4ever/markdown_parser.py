@@ -268,12 +268,14 @@ def block_convertor(block: dict, depth=0, structured_notion={}, page_id="") -> s
 
         else:
             information = information_collector(block[block_type], structured_notion, page_id)
-            # Special Case: The content of the synced block is in the children so that we can bypass this step.
-            # And we will handle the children in the following steps.
             if block_type != "synced_block" and block_type in block_type_map:
                 if block_type in ["embed", "video"]:
                     block[block_type]["dont_download"] = True
                 outcome_block = block_type_map[block_type](information) + "\n\n"
+            # Special Case: The content of the synced block is in the children so that we can bypass this step.
+            # And we will handle the children in the following steps.
+            elif block_type in ("synced_block", "column_list", "column"):
+                outcome_block = ""
             else:
                 outcome_block = f"[{block_type} is not supported]\n\n"
 
@@ -308,7 +310,14 @@ def block_convertor(block: dict, depth=0, structured_notion={}, page_id="") -> s
                         outcome_block += " | " + " | ".join(value) + " | " + "\n"
                     outcome_block += "\n"
                 else:
-                    if block["type"] not in ("heading_1", "heading_2", "heading_3", "synced_block"):
+                    if block["type"] not in (
+                        "heading_1",
+                        "heading_2",
+                        "heading_3",
+                        "synced_block",
+                        "column_list",
+                        "column",
+                    ):
                         depth += 1
                     child_blocks = block["children"]
                     for block in child_blocks:
