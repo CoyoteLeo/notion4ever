@@ -255,11 +255,11 @@ def parse_family_lines(structured_notion: dict):
 def generate_urls(page_id: str, structured_notion: dict, config: dict):
     """Generates url for each page nested in page with 'page_id'"""
     if page_id == structured_notion["root_page_id"]:
-        f_url = "index.html"
+        f_url = "/index.html"
         structured_notion["pages"][page_id]["url"] = f_url
         structured_notion["urls"].append(f_url)
     else:
-        f_url = f"{page_id}/index.html"
+        f_url = f"/{page_id}/index.html"
 
         structured_notion["pages"][page_id]["url"] = f_url
         structured_notion["urls"].append(f_url)
@@ -437,12 +437,13 @@ def download_and_replace_paths(structured_notion: dict, config: dict):
         for i_file, file_url in enumerate(page["files"]):
             # Original file information
             clean_url = urljoin(file_url, urlparse(file_url).path)
-            filename = unquote(Path(clean_url).name)
-
+            filename = unquote(urlparse(clean_url).path.replace("/", "_").strip("_"))
             # Downloaded file information
             parent = Path(page["url"]).parent
             new_url = str(parent / filename)
-            local_file_location = config["output_dir"] / Path(page["url"]).parent / filename
+            local_file_location = (
+                config["output_dir"] / Path(page["url"].lstrip("/")).parent / filename
+            )
 
             # Start the download
             local_file_location.parent.mkdir(parents=True, exist_ok=True)

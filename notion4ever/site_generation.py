@@ -66,7 +66,7 @@ def generate_page(page_id: str, structured_notion: dict, config: dict):
     page_url = page["url"]
 
     # Generated file information
-    folder = (config["output_dir"] / page_url).parent
+    folder = (config["output_dir"] / page_url.lstrip("/")).parent
     md_filename = f"{page_id}.md"
     html_filename = "index.html"
 
