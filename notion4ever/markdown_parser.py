@@ -1,6 +1,6 @@
 # Most of the code was taken from the Notion2md repository
 # https://github.com/echo724/notion2md/tree/main/notion2md
-
+import re
 from pathlib import Path
 from urllib.parse import urljoin
 from urllib.parse import urlparse
@@ -399,7 +399,8 @@ mention_map = {
 
 def richtext_word_converter(richtext: dict, title_mode=False) -> str:
     outcome_word = ""
-    plain_text = richtext["plain_text"]
+    # handle the escape characters
+    plain_text = re.sub(r"(#+ )", r"\\\g<1>", richtext["plain_text"])
     if richtext["type"] == "equation":
         outcome_word = equation(plain_text)
         if title_mode:
@@ -412,11 +413,8 @@ def richtext_word_converter(richtext: dict, title_mode=False) -> str:
         if title_mode:
             outcome_word = plain_text
             return outcome_word
-        if "href" in richtext:
-            if richtext["href"]:
-                outcome_word = text_link(richtext["text"])
-            else:
-                outcome_word = plain_text
+        if richtext.get("href"):
+            outcome_word = text_link(richtext["text"])
         else:
             outcome_word = plain_text
         annot = richtext["annotations"]
