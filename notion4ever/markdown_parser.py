@@ -325,7 +325,6 @@ def block_convertor(block: dict, depth=0, structured_notion={}, page_id="") -> s
                         # the page contains numbered list, header 1 will be the
                         # child block for it, which is strange.
                         if block["type"] == "heading_1":
-                            print(f"DEPTH {depth}")
                             depth = 0
                         block_md = block_convertor(block, depth, structured_notion, page_id)
                         outcome_block += "\t" * depth + block_md
