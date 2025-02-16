@@ -100,6 +100,7 @@ def generate_page(page_id: str, structured_notion: dict, config: dict):
             "pymdownx.tilde",
             "pymdownx.tasklist",
             "pymdownx.superfences",
+            "markdown_mermaidjs",
         ],
         extension_configs={
             "mdx_truly_sane_lists": {

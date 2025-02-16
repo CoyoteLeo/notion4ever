@@ -249,6 +249,20 @@ coverage = ["coverage", "figleaf"]
 testing = ["pytest"]
 
 [[package]]
+name = "markdown-mermaidjs"
+version = "2.0.0"
+description = "Python-Markdown extension to add Mermaid graph"
+optional = false
+python-versions = ">=3.9"
+files = [
+    {file = "markdown_mermaidjs-2.0.0-py3-none-any.whl", hash = "sha256:5590143c43d017ef2b325769331e3c095dea272ea06cdeead7ca4191e77099e8"},
+    {file = "markdown_mermaidjs-2.0.0.tar.gz", hash = "sha256:96e875437a16cc936f04a3a007b65dbecd8d31e7dff36d5ad2aa7aefe64bb969"},
+]
+
+[package.dependencies]
+markdown = ">=3.7"
+
+[[package]]
 name = "markupsafe"
 version = "3.0.2"
 description = "Safely add untrusted strings to HTML/XML markup."
@@ -597,4 +611,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "ae916e8ac698235d879b612203a23adfae8019201ec0aaf42cc96a7fca177e02"
+content-hash = "5d89125070ad32a0022fe5ad86fb84a47b16345058b2714dedf195b071b6b652"
