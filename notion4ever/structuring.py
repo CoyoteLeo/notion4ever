@@ -155,7 +155,10 @@ def parse_headers(raw_notion: dict) -> dict:
             else:
                 notion_pages[page_id]["title"] = None
                 logging.warning(f"🤖Empty database entries could break the site building 😫.")
-                
+
+        # Ensure that title is not None for latter site generation
+        if notion_pages[page_id]["title"] is None:
+            notion_pages[page_id]["title"] = page_id
 
         # Time
         notion_pages[page_id]["last_edited_time"] = \
