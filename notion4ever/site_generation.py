@@ -39,13 +39,8 @@ def generate_404(structured_notion: dict, config: dict):
 
 def generate_archive(structured_notion: dict, config: dict):
     """Generates archive page."""
-    if config["build_locally"]:
-        archive_link = 'Archive.html'
-        structured_notion['archive_url'] = str((Path(config["output_dir"]).resolve() / archive_link))
-    else:
-        archive_link = 'Archive/index.html'
-        structured_notion['archive_url'] = urljoin(structured_notion['base_url'], archive_link)
-        (Path(config["output_dir"]) / "Archive").mkdir(exist_ok=True) 
+    archive_link = 'Archive.html'
+    structured_notion['archive_url'] = str((Path(config["output_dir"]).resolve() / archive_link))
         
     with open(Path(config["output_dir"]) / archive_link, 'w+', encoding='utf-8') as f:
         # Specify template folder
@@ -64,20 +59,15 @@ def str_to_dt(structured_notion: dict):
 def generate_page(page_id: str, structured_notion: dict, config: dict):
     page = structured_notion["pages"][page_id]
     page_url = page["url"]
-    md_filename = page["title"] + '.md'
 
-    if config["build_locally"]:
-        folder = urljoin(page_url, '.')
-        local_file_location = str(Path(folder).relative_to(Path(config["output_dir"]).resolve()))
-        html_filename = Path(page_url).name
-    else:
-        local_file_location = page_url.lstrip(config["site_url"])
-        html_filename = 'index.html'
+    # Generated file information
+    folder = (config["output_dir"] / page_url).parent
+    md_filename = f"{page_id}.md"
+    html_filename = f"index.html"
 
-    logging.debug(f"🤖 MD {Path(local_file_location) / md_filename}; HTML {Path(local_file_location) / html_filename}")
-
-    (config["output_dir"] / Path(local_file_location)).mkdir(parents=True, exist_ok=True)
-    with open((config["output_dir"] / Path(local_file_location) / md_filename).resolve(), 'w+', encoding='utf-8') as f:
+    logging.debug(f"🤖 MD {folder / md_filename}; HTML {folder / html_filename}")
+    folder.mkdir(parents=True, exist_ok=True)
+    with open((folder / md_filename).resolve(), 'w+', encoding='utf-8') as f:
         metadata = ("---\n"
                     f"title: {page['title']}\n"
                     f"cover: {page['cover']}\n"
@@ -111,7 +101,8 @@ def generate_page(page_id: str, structured_notion: dict, config: dict):
                                                     })
                                                                 
     tml = (Path(config["templates_dir"] ) / 'page.html').read_text()
-    with open((config["output_dir"] / Path(local_file_location) / html_filename).resolve(), 'w+', encoding='utf-8')as f:
+
+    with open((folder / html_filename).resolve(), 'w+', encoding='utf-8')as f:
         # Specify template folder
         jinja_loader = jinja2.FileSystemLoader(config["templates_dir"])
         jtemplate = jinja2.Environment(loader=jinja_loader).from_string(tml)
@@ -124,7 +115,7 @@ def generate_pages(structured_notion: dict, config: dict):
 
 def generate_search_index(structured_notion: dict, config: dict):
     """Generates search index file if building for server"""
-    if not config["build_locally"] and structured_notion["search_index"]:
+    if structured_notion["search_index"]:
         search_index_path = Path(config["output_dir"]) / "search_index.json"
         with open(search_index_path, 'w', encoding='utf-8') as f:
             json.dump(structured_notion["search_index"], f, ensure_ascii=False)

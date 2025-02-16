@@ -246,46 +246,14 @@ def parse_family_lines(structured_notion: dict):
 def generate_urls(page_id:str, structured_notion: dict, config: dict):
     """Generates url for each page nested in page with 'page_id'"""
     if page_id == structured_notion["root_page_id"]:
-        if config["build_locally"]:
-            f_name = clean_url_string(structured_notion["pages"][page_id]["title"])
-        else:
-            f_name = 'index'
-
-        f_name += '.html'
-
-        if config["build_locally"]:
-            f_url = str(Path(config["output_dir"]).resolve() / f_name)
-        else:
-            f_url = config["site_url"]
+        f_url = "index.html"
         structured_notion["pages"][page_id]["url"] = f_url
         structured_notion["urls"].append(f_url)
     else:
-        if config["build_locally"]:
-            parent_id = structured_notion["pages"][page_id]["parent"]
-            parent_url = structured_notion["pages"][parent_id]["url"]
-            f_name = clean_url_string(structured_notion["pages"][page_id]["title"])
-            
-            f_url = Path(parent_url).parent.resolve()
-            f_url = f_url / f_name / f_name
-            f_url = str(f_url.resolve()) + '.html'
-            while f_url in structured_notion["urls"]:
-                f_name += "_"
-                f_url = Path(parent_url).parent
-                f_url = f_url / f_name / f_name
-                f_url = str(f_url.resolve()) + '.html'
-            structured_notion["pages"][page_id]["url"] = f_url
-            structured_notion["urls"].append(f_url)
-        else:
-            parent_id = structured_notion["pages"][page_id]["parent"]
-            parent_url = structured_notion["pages"][parent_id]["url"]
-            parent_url += '/'
-            f_name = clean_url_string(structured_notion["pages"][page_id]["title"])
-            f_url = urljoin(parent_url, f_name)
-            while f_url in structured_notion["urls"]:
-                f_name += "_"
-                f_url = urljoin(parent_url, f_name) 
-            structured_notion["pages"][page_id]["url"] = f_url
-            structured_notion["urls"].append(f_url)
+        f_url = f"{page_id}/index.html"
+
+        structured_notion["pages"][page_id]["url"] = f_url
+        structured_notion["urls"].append(f_url)
            
     for child_id in structured_notion["pages"][page_id]["children"]:
         generate_urls(child_id, structured_notion, config)
@@ -438,28 +406,22 @@ def parse_db_entry_properties(raw_notion: dict, structured_notion:dict):
 def download_and_replace_paths(structured_notion:dict, config: dict):
     for page_id, page in structured_notion["pages"].items():
         for i_file, file_url in enumerate(page["files"]):
-            # Download file
+            # Original file information
             clean_url = urljoin(file_url, urlparse(file_url).path)
+            filename = unquote(Path(clean_url).name)
 
-            if config["build_locally"]:
-                folder = urljoin(page["url"], '.')
-                filename = unquote(Path(clean_url).name)
-                new_url = urljoin(folder, filename)
-                local_file_location = str(Path(new_url).relative_to(Path(config["output_dir"]).resolve()))
-            else:
-                filename = unquote(Path(clean_url).name)
-                new_url = urljoin(page["url"] + '/', filename)
+            # Downloaded file information
+            parent = Path(page["url"]).parent
+            new_url = str(parent / filename)
+            local_file_location = config["output_dir"] / Path(page["url"]).parent / filename
 
-                local_file_location = new_url.replace(config["site_url"], '', 1)
-                local_file_location = local_file_location.lstrip("/")
-
-            (config["output_dir"] / Path(local_file_location).parent).mkdir(parents=True, exist_ok=True)
-            full_local_name = (Path(config["output_dir"]).resolve() / local_file_location)
-            if Path(full_local_name).exists():
+            # Start the download
+            local_file_location.parent.mkdir(parents=True, exist_ok=True)
+            if local_file_location.exists():
                 logging.debug(f"🤖 {filename} already exists.")
             else:
                 try:
-                    request.urlretrieve(file_url, full_local_name)
+                    request.urlretrieve(file_url, local_file_location.resolve())
                     logging.debug(f"🤖 Downloaded {filename}")
                 except HTTPError:
                     logging.warning(f"🤖Cannot download {filename} from link {file_url}.")
@@ -538,7 +500,6 @@ def structurize_notion_content(raw_notion: dict, config: dict) -> dict:
     structured_notion["pages"] = parse_headers(raw_notion)
     structured_notion["include_footer"] = config["include_footer"]
     structured_notion["include_search"] = config["include_search"]
-    structured_notion["build_locally"] = config["build_locally"]
     find_lists_in_dbs(structured_notion)
     logging.debug(f"🤖 Structurized headers")
 

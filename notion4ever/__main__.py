@@ -42,16 +42,10 @@ def main():
     parser.add_argument('--sass_dir', '-sd', 
         type=str, default="./_sass", 
         help="Directory for SASS files.")
-    parser.add_argument('--build_locally', '-bl', 
-        type=str_to_bool, default=False, 
-        help="Build the site locally. (true/false)")
     parser.add_argument('--download_files', '-df', 
         type=str_to_bool, default=True, 
         help="Download files. (true/false)")
-    parser.add_argument('--site_url', '-su', 
-        type=str, default=os.environ.get("SITE_URL"), 
-        help="Base URL of the site.")
-    parser.add_argument('--remove_before', '-rb', 
+    parser.add_argument('--remove_before', '-rb',
         type=str_to_bool, default=False, 
         help="Remove existing files before generating the site. (true/false)")
     parser.add_argument('--include_footer', '-if', 
@@ -70,6 +64,19 @@ def main():
         llevel = logging.DEBUG
     else:
         llevel = logging.INFO
+
+    if config["output_dir"]:
+        config["output_dir"] = Path(config["output_dir"]).absolute()
+
+    if config["templates_dir"]:
+        config["templates_dir"] = Path(config["templates_dir"]).absolute()
+        if not config["templates_dir"].exists():
+            raise FileNotFoundError(f"Templates directory {config['templates_dir']} not found.")
+
+    if config["sass_dir"]:
+        config["sass_dir"] = Path(config["sass_dir"]).absolute()
+        if not config["sass_dir"].exists():
+            raise FileNotFoundError(f"SASS directory {config['sass_dir']} not found.")
     
     logging.basicConfig(format="%(asctime)s %(levelname)s: %(message)s", 
                     level=llevel)
@@ -115,15 +122,9 @@ def main():
             structured_notion = json.load(f)
 
     # Stage 3. Generating site from template and data
-    if config["build_locally"]:
-        structured_notion['base_url'] = \
-            str(Path(config["output_dir"]).resolve())
-    else:
-        structured_notion['base_url'] = config["site_url"]
+    structured_notion['base_url'] = ""
 
-    logging.info(("🤖 Started generating site "
-                 f"{'locally' if config['build_locally'] else ''} "
-                 f"to {config['output_dir']}"))
+    logging.info(f"🤖 Started generating site to {config['output_dir']}")
 
     site_generation.generate_site(structured_notion, config)
 
