@@ -141,6 +141,10 @@ def video(information: dict) -> str:
     return block_md
 
 
+def table_of_contents(information: dict) -> str:
+    return "[TOC]"
+
+
 block_type_map = {
     "paragraph": paragraph,
     "heading_1": heading_1,
@@ -162,6 +166,7 @@ block_type_map = {
     "file": file,
     "table_row": table_row,
     "video": video,
+    "table_of_contents": table_of_contents,
 }
 
 
