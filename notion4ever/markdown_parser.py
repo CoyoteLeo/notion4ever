@@ -12,14 +12,20 @@ def paragraph(information: dict) -> str:
 
 
 def heading_1(information: dict) -> str:
+    if information.get("is_toggleable"):
+        return f"/// details | <h1>{information['text']}</h1>"
     return f"# {information['text']}"
 
 
 def heading_2(information: dict) -> str:
+    if information.get("is_toggleable"):
+        return f"/// details | <h2>{information['text']}</h2>"
     return f"## {information['text']}"
 
 
 def heading_3(information: dict) -> str:
+    if information.get("is_toggleable"):
+        return f"/// details | <h3>{information['text']}</h3>"
     return f"### {information['text']}"
 
 
@@ -170,6 +176,19 @@ block_type_map = {
 }
 
 
+def detail_footer(information: dict) -> str | None:
+    if information.get("is_toggleable"):
+        return "///"
+    return None
+
+
+block_type_footer_map = {
+    "heading_1": detail_footer,
+    "heading_2": detail_footer,
+    "heading_3": detail_footer,
+}
+
+
 def blocks_convertor(blocks: list, structured_notion, page_id) -> str:
     results = []
     for block in blocks:
@@ -204,6 +223,8 @@ def information_collector(payload: dict, structured_notion: dict, page_id) -> di
             structured_notion["pages"][page_id]["files"].append(payload["external"]["url"])
     if "language" in payload:
         information["language"] = payload["language"]
+    if "is_toggleable" in payload:
+        information["is_toggleable"] = payload["is_toggleable"]
 
     # internal url
     if "file" in payload:
@@ -246,15 +267,11 @@ def block_convertor(block: dict, depth=0, structured_notion={}, page_id="") -> s
                 outcome_block = f"[{outcome_block}"
 
         else:
+            information = information_collector(block[block_type], structured_notion, page_id)
             if block_type in block_type_map:
                 if block_type in ["embed", "video"]:
                     block[block_type]["dont_download"] = True
-                outcome_block = (
-                    block_type_map[block_type](
-                        information_collector(block[block_type], structured_notion, page_id)
-                    )
-                    + "\n\n"
-                )
+                outcome_block = block_type_map[block_type](information) + "\n\n"
             else:
                 outcome_block = f"[{block_type} is not supported]\n\n"
 
@@ -289,7 +306,8 @@ def block_convertor(block: dict, depth=0, structured_notion={}, page_id="") -> s
                         outcome_block += " | " + " | ".join(value) + " | " + "\n"
                     outcome_block += "\n"
                 else:
-                    depth += 1
+                    if block["type"] not in ("heading_1", "heading_2", "heading_3"):
+                        depth += 1
                     child_blocks = block["children"]
                     for block in child_blocks:
                         # This is needed, because notion thinks, that if
@@ -301,6 +319,10 @@ def block_convertor(block: dict, depth=0, structured_notion={}, page_id="") -> s
                         block_md = block_convertor(block, depth, structured_notion, page_id)
                         outcome_block += "\t" * depth + block_md
 
+            if block_type in block_type_footer_map:
+                footer = block_type_footer_map[block_type](information)
+                if footer:
+                    outcome_block += footer + "\n\n"
     return outcome_block
 
 

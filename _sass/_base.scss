@@ -7,10 +7,12 @@ html {
  */
 body, h1, h2, h3, h4, h5, h6,
 p, blockquote, pre, hr,
-dl, dd, ol, ul, figure {
+dl, dd, ol, ul, figure,
+summary:has(> h1)::before, details[open] summary:has(> h1)::before,
+summary:has(> h2)::before, details[open] summary:has(> h2)::before,
+summary:has(> h3)::before, details[open] summary:has(> h3)::before {
   margin: 0;
   padding: 0;
-
 }
 
 
@@ -42,6 +44,9 @@ body {
 h1, h2, h3, h4, h5, h6,
 p, blockquote, pre,
 ul, ol, dl, figure,
+summary:has(> h1)::before, details[open] summary:has(> h1)::before,
+summary:has(> h2)::before, details[open] summary:has(> h2)::before,
+summary:has(> h3)::before, details[open] summary:has(> h3)::before,
 %vertical-rhythm {
   margin-bottom: $spacing-unit / 2;
 }
@@ -104,7 +109,10 @@ li {
 /**
  * Headings
  */
-h1, h2, h3, h4, h5, h6 {
+h1, h2, h3, h4, h5, h6,
+summary:has(> h1)::before, details[open] summary:has(> h1)::before,
+summary:has(> h2)::before, details[open] summary:has(> h2)::before,
+summary:has(> h3)::before, details[open] summary:has(> h3)::before {
   font-family: $header-font-family;
   font-weight: bold;
 }

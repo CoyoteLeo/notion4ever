@@ -172,9 +172,9 @@
 .page-content {
   margin-bottom: $spacing-unit;
 
-  h1 { margin-top: $spacing-unit * 2 }
-  h2 { margin-top: $spacing-unit * 1.25 }
-  h3, h4, h5, h6 { margin-top: $spacing-unit }
+  h1, summary:has(> h1)::before, details[open] summary:has(> h1)::before { margin-top: $spacing-unit * 2 }
+  h2, summary:has(> h2)::before, details[open] summary:has(> h2)::before { margin-top: $spacing-unit * 1.25 }
+  h3, summary:has(> h3)::before, details[open] summary:has(> h3)::before, h4, h5, h6 { margin-top: $spacing-unit }
 
   h2 {
     @include relative-font-size(1.75);
@@ -540,4 +540,16 @@ video {
     font-size: 13px;
     color: #666;
   }
+}
+
+.page-content summary:has(> h1)::before, .page-content details[open] summary:has(> h1)::before {
+    @include relative-font-size(1.25);
+}
+
+.page-content summary:has(> h2)::before, .page-content details[open] summary:has(> h2)::before {
+    @include relative-font-size(1);
+}
+
+.page-content summary:has(> h2)::before, .page-content details[open] summary:has(> h2)::before {
+    @include relative-font-size(0.75);
 }

@@ -1,2 +1,21 @@
 // Placeholder to allow defining custom styles that override everything else.
 // (Use `_sass/minima/custom-variables.scss` to override variable defaults)
+
+summary::-webkit-details-marker {
+  display: none
+}
+
+summary {
+  display: flex
+}
+
+summary:before {
+  content: "►";
+  align-content: center;
+  margin-right: 0.3rem !important;
+}
+
+details[open] > summary:before {
+  content: "▼";
+  align-content: center;
+}
