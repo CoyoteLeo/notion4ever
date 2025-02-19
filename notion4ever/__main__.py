@@ -27,8 +27,7 @@ def str_to_bool(value):
 def main():
     parser = argparse.ArgumentParser(
         description=(
-            "Notion4ever: Export all your Notion content to markdown and HTML,"
-            "and serve it as a static site."
+            "Notion4ever: Export all your Notion content to markdown and HTML," "and serve it as a static site."
         )
     )
     parser.add_argument(

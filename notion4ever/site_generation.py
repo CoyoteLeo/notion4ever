@@ -152,9 +152,7 @@ def generate_site(structured_notion: dict, config: dict):
 
     if (Path(config["output_dir"]) / "css" / "fonts").exists():
         shutil.rmtree(Path(config["output_dir"]) / "css" / "fonts")
-    shutil.copytree(
-        Path(config["sass_dir"]) / "fonts", Path(config["output_dir"]) / "css" / "fonts"
-    )
+    shutil.copytree(Path(config["sass_dir"]) / "fonts", Path(config["output_dir"]) / "css" / "fonts")
     logging.debug("🤖 Copied fonts.")
 
     str_to_dt(structured_notion)

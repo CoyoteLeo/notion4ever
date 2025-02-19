@@ -151,7 +151,7 @@ def table_of_contents(information: dict) -> str:
     return "[TOC]"
 
 
-block_type_map = {
+block_func_map = {
     "paragraph": paragraph,
     "heading_1": heading_1,
     "heading_2": heading_2,
@@ -199,7 +199,7 @@ def blocks_convertor(blocks: list, structured_notion, page_id) -> str:
     return outcome_blocks
 
 
-def information_collector(payload: dict, structured_notion: dict, page_id) -> dict:
+def collect_block_info(payload: dict, structured_notion: dict, page_id) -> dict:
     information = dict()
     if "text" in payload:
         information["text"] = richtext_convertor(payload["text"])
@@ -244,95 +244,85 @@ def information_collector(payload: dict, structured_notion: dict, page_id) -> di
 def block_convertor(block: dict, depth=0, structured_notion={}, page_id="") -> str:
     block_type = block["type"]
     # Special Case: Block is blank
-    if (
-        block_type == "paragraph"
-        and not block["has_children"]
-        and not block[block_type]["rich_text"]
-    ):
-        outcome_block = blank() + "\n\n"
-    else:
-        if block_type in ["child_page", "child_database", "db_entry"]:
-            title = structured_notion["pages"][block["id"]]["title"]
-            url = structured_notion["pages"][block["id"]]["url"]
-            outcome_block = f"{title}]({url})\n\n"
-            if structured_notion["pages"][block["id"]]["emoji"]:
-                emoji = structured_notion["pages"][block["id"]]["emoji"]
-                outcome_block = f"[{emoji} {outcome_block}"
-            elif structured_notion["pages"][block["id"]]["icon"]:
-                icon = structured_notion["pages"][block["id"]]["icon"]
-                outcome_block = (
-                    f"""[<span class="miniicon"> <img src="{icon}"></span> {outcome_block}"""
-                )
-            else:
-                outcome_block = f"[{outcome_block}"
+    if block_type == "paragraph" and not block["has_children"] and not block[block_type]["rich_text"]:
+        return blank() + "\n\n"
 
+    # Special Case: Block is a child page
+    if block_type in ["child_page", "child_database", "db_entry"]:
+        if block["id"] not in structured_notion["pages"]:
+            print(f"Page {block['id']} is not found in the database.")
+            return ""
+        title = structured_notion["pages"][block["id"]]["title"]
+        url = structured_notion["pages"][block["id"]]["url"]
+        outcome_block = f"{title}]({url})\n\n"
+        if structured_notion["pages"][block["id"]]["emoji"]:
+            emoji = structured_notion["pages"][block["id"]]["emoji"]
+            outcome_block = f"[{emoji} {outcome_block}"
+        elif structured_notion["pages"][block["id"]]["icon"]:
+            icon = structured_notion["pages"][block["id"]]["icon"]
+            outcome_block = f"""[<span class="miniicon"> <img src="{icon}"></span> {outcome_block}"""
         else:
-            information = information_collector(block[block_type], structured_notion, page_id)
-            if block_type != "synced_block" and block_type in block_type_map:
-                if block_type in ["embed", "video"]:
-                    block[block_type]["dont_download"] = True
-                outcome_block = block_type_map[block_type](information) + "\n\n"
-            # Special Case: The content of the synced block is in the children so that we can bypass this step.
-            # And we will handle the children in the following steps.
-            elif block_type in ("synced_block", "column_list", "column"):
-                outcome_block = ""
-            else:
-                outcome_block = f"[{block_type} is not supported]\n\n"
+            outcome_block = f"[{outcome_block}"
+        return outcome_block
 
-            if block_type == "code":
-                outcome_block = outcome_block.rstrip("\n").replace("\n", "\n" + "\t" * depth)
-                outcome_block += "\n\n"
+    # Normal Cases
+    information = collect_block_info(block[block_type], structured_notion, page_id)
+    if block_type != "synced_block" and block_type in block_func_map:
+        if block_type in ["embed", "video"]:
+            block[block_type]["dont_download"] = True
+        outcome_block = block_func_map[block_type](information) + "\n\n"
+    # Special Case: The content of these kind of blocks is in the children so that we can bypass this step.
+    # And we will handle the children in the following steps.
+    elif block_type in ("synced_block", "column_list", "column", "table"):
+        outcome_block = ""
+    else:
+        outcome_block = f"[{block_type} is not supported]\n\n"
 
-            if block["has_children"]:
-                if block_type == "table":
-                    depth += 1
-                    child_blocks = block["children"]
-                    table_list = []
-                    for cell_block in child_blocks:
-                        cell_block_type = cell_block["type"]
-                        table_list.append(
-                            block_type_map[cell_block_type](
-                                information_collector(
-                                    cell_block[cell_block_type],
-                                    structured_notion,
-                                    page_id,
-                                )
-                            )
-                        )
-                    # convert to markdown table
-                    for index, value in enumerate(table_list):
-                        if index == 0:
-                            outcome_block = " | " + " | ".join(value) + " | " + "\n"
-                            outcome_block += (
-                                " | " + " | ".join(["----"] * len(value)) + " | " + "\n"
-                            )
-                            continue
-                        outcome_block += " | " + " | ".join(value) + " | " + "\n"
-                    outcome_block += "\n"
-                else:
-                    if block["type"] not in (
-                        "heading_1",
-                        "heading_2",
-                        "heading_3",
-                        "synced_block",
-                        "column_list",
-                        "column",
-                    ):
-                        depth += 1
-                    child_blocks = block["children"]
-                    for block in child_blocks:
-                        # This is needed, because notion thinks, that if
-                        # the page contains numbered list, header 1 will be the
-                        # child block for it, which is strange.
-                        if block["type"] == "heading_1":
-                            depth = 0
-                        block_md = block_convertor(block, depth, structured_notion, page_id)
-                        outcome_block += "\t" * depth + block_md
+    # Process children
+    if block["has_children"]:
+        if block_type == "table":
+            depth += 1
+            child_blocks = block["children"]
+            table_list = []
+            for cell in child_blocks:
+                cell_type = cell["type"]
+                cell_info = collect_block_info(cell[cell_type], structured_notion, page_id)
+                table_list.append(block_func_map[cell_type](cell_info))
+            # convert to markdown table
+            for index, value in enumerate(table_list):
+                outcome_block += f"| {' | '.join(value)} |\n"
+                if index == 0:
+                    outcome_block += f"| {' | '.join(['---'] * len(value))} |\n"
+            outcome_block += "\n"
+        else:
+            if block["type"] not in (
+                "heading_1",
+                "heading_2",
+                "heading_3",
+                "synced_block",
+                "column_list",
+                "column",
+            ):
+                depth += 1
+            child_blocks = block["children"]
+            for block in child_blocks:
+                # This is needed, because notion thinks, that if
+                # the page contains numbered list, header 1 will be the
+                # child block for it, which is strange.
+                if block["type"] == "heading_1":
+                    depth = 0
+                block_md = block_convertor(block, depth, structured_notion, page_id)
+                outcome_block += "\t" * depth + block_md
 
-            if block_type in block_type_footer_map:
-                footer = block_type_footer_map[block_type](information)
-                if footer:
-                    outcome_block += footer + "\n\n"
+    # Post-processing
+    if block_type == "code":
+        outcome_block = outcome_block.rstrip("\n").replace("\n", "\n" + "\t" * depth)
+        outcome_block += "\n\n"
+    elif block_type in block_type_footer_map:
+        footer = block_type_footer_map[block_type](information)
+        if footer:
+            outcome_block += footer + "\n\n"
+
     return outcome_block
 
 

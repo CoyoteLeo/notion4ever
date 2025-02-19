@@ -139,9 +139,7 @@ def parse_headers(raw_notion: dict) -> dict:
         # Title
         if notion_pages[page_id]["type"] == "page":
             if len(page["properties"]["title"]["title"]) > 0:
-                notion_pages[page_id]["title"] = page["properties"]["title"]["title"][0][
-                    "plain_text"
-                ]
+                notion_pages[page_id]["title"] = page["properties"]["title"]["title"][0]["plain_text"]
             else:
                 notion_pages[page_id]["title"] = None
         elif notion_pages[page_id]["type"] == "database":
@@ -154,9 +152,7 @@ def parse_headers(raw_notion: dict) -> dict:
             res = list(res)[0]
             if len(res) > 0:
                 # notion_pages[page_id]["title"] = res[0]["plain_text"]
-                notion_pages[page_id]["title"] = markdown_parser.richtext_convertor(
-                    res, title_mode=True
-                )
+                notion_pages[page_id]["title"] = markdown_parser.richtext_convertor(res, title_mode=True)
             else:
                 notion_pages[page_id]["title"] = None
                 logging.warning("🤖Empty database entries could break the site building 😫.")
@@ -172,9 +168,7 @@ def parse_headers(raw_notion: dict) -> dict:
                 if page["properties"]["Date"]["date"] is not None:
                     notion_pages[page_id]["date"] = page["properties"]["Date"]["date"]["start"]
                     if page["properties"]["Date"]["date"]["end"] is not None:
-                        notion_pages[page_id]["date_end"] = page["properties"]["Date"]["date"][
-                            "end"
-                        ]
+                        notion_pages[page_id]["date_end"] = page["properties"]["Date"]["date"]["end"]
 
         # Parent
         if "workspace" in page["parent"].keys():
@@ -414,9 +408,7 @@ def parse_db_entry_properties(raw_notion: dict, structured_notion: dict):
         if page["type"] == "db_entry":
             structured_notion["pages"][page_id]["properties"] = raw_notion[page_id]["properties"]
             structured_notion["pages"][page_id]["properties_md"] = {}
-            for property_title, property in structured_notion["pages"][page_id][
-                "properties"
-            ].items():
+            for property_title, property in structured_notion["pages"][page_id]["properties"].items():
                 if property["type"] == "title":
                     continue  # We already have the title
                 structured_notion["pages"][page_id]["properties_md"][property_title] = ""
@@ -424,9 +416,9 @@ def parse_db_entry_properties(raw_notion: dict, structured_notion: dict):
                     if property["type"] == "files":
                         for file in property["files"]:
                             structured_notion["pages"][page_id]["files"].append(file["file"]["url"])
-                    structured_notion["pages"][page_id]["properties_md"][property_title] = (
-                        properties_map[property["type"]](property)
-                    )
+                    structured_notion["pages"][page_id]["properties_md"][property_title] = properties_map[
+                        property["type"]
+                    ](property)
                 else:
                     if property["type"] != "title":  # We already have the title
                         logging.debug(f"{property['type']} is not supported yet")
@@ -441,9 +433,7 @@ def download_and_replace_paths(structured_notion: dict, config: dict):
             # Downloaded file information
             parent = Path(page["url"]).parent
             new_url = str(parent / filename)
-            local_file_location = (
-                config["output_dir"] / Path(page["url"].lstrip("/")).parent / filename
-            )
+            local_file_location = config["output_dir"] / Path(page["url"].lstrip("/")).parent / filename
 
             # Start the download
             local_file_location.parent.mkdir(parents=True, exist_ok=True)
@@ -463,9 +453,7 @@ def download_and_replace_paths(structured_notion: dict, config: dict):
 
             # Replace url in markdown
             md_content = structured_notion["pages"][page_id]["md_content"]
-            structured_notion["pages"][page_id]["md_content"] = md_content.replace(
-                file_url, new_url
-            )
+            structured_notion["pages"][page_id]["md_content"] = md_content.replace(file_url, new_url)
 
             # Add short description for sites
             clean_content = strip_html_tags(md_content)
@@ -498,9 +486,7 @@ def sorting_db_entries(structured_notion: dict):
 
 def sorting_page_by_year(structured_notion: dict):
     structured_notion["sorted_pages"] = {
-        k: dt_parser.isoparse(v["date"])
-        for k, v in structured_notion["pages"].items()
-        if "date" in v.keys()
+        k: dt_parser.isoparse(v["date"]) for k, v in structured_notion["pages"].items() if "date" in v.keys()
     }
     structured_notion["sorted_pages"] = {
         k: v
@@ -512,9 +498,7 @@ def sorting_page_by_year(structured_notion: dict):
     }
     # grouping by year
     structured_notion["sorted_id_by_year"] = {}
-    for year, year_pages in groupby(
-        structured_notion["sorted_pages"].items(), key=lambda item: item[1].year
-    ):
+    for year, year_pages in groupby(structured_notion["sorted_pages"].items(), key=lambda item: item[1].year):
         structured_notion["sorted_id_by_year"][year] = []
         for page in year_pages:
             structured_notion["sorted_id_by_year"][year].append(page[0])
@@ -531,9 +515,7 @@ def create_search_index(structured_notion: dict):
             # Debug log to check content
             logging.debug(f"🤖 Indexing content for {page['title']}: {clean_content[:200]}...")
 
-            search_index.append(
-                {"title": page["title"], "content": clean_content, "url": page["url"]}
-            )
+            search_index.append({"title": page["title"], "content": clean_content, "url": page["url"]})
 
     structured_notion["search_index"] = search_index
 
